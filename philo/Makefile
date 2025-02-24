@@ -10,7 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME		:= philosophers
+NAME		:= philo
 
 CC		:= cc
 CFLAGS		:= -Wall -Wextra -Werror

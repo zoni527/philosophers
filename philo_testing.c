@@ -67,7 +67,7 @@ void	*prime_routine(void *arg)
 
 void	*sum_routine(void *arg)
 {
-	
+	return (NULL);
 }
 
 int	main(int argc, char *argv[])
