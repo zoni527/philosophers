@@ -20,16 +20,24 @@
 # include <stdbool.h>
 # include <stdio.h>
 
-# define LEFT	0
-# define RIGHT	1
+# define LEFT			0
+# define RIGHT			1
 
-# define SUCCESS	0
-# define FAILURE	1
+# define SUCCESS		0
+# define FAILURE		1
 
-# define START_DELAY_S	1
-# define START_DELAY_MS	0
+# define ALIVE			0
+# define DEAD			1
 
-# define TICK	100
+# define TICK			100
+
+# define E_INPUT		1
+# define E_ALLOC		2
+# define E_NAN			3
+# define E_OVERFLOW		4
+# define E_ZERO			5
+# define E_MUTEX		6
+# define E_THREAD		7
 
 # define M_INPUT_EXAMPLE	"Inputs (positive integers, time unit is ms):\n" \
 							"./philo <N of philos> <T to die> <T to eat> " \
@@ -39,19 +47,16 @@
 # define M_OVERFLOW			"ERROR: don't try to overflow inputs"
 # define M_ZERO				"ERROR: use numbers larger than zero"
 
-# define E_INPUT	1
-# define E_ALLOC	2
-# define E_NAN		3
-# define E_OVERFLOW	4
-# define E_ZERO		5
-# define E_MUTEX	6
+# define M_TAKEN_FORK	"has taken a fork"
+# define M_EATING		"is eating"
+# define M_SLEEPING		"is sleeping"
+# define M_THINKING		"is thinking"
 
 typedef struct s_data t_data;
 
 typedef struct s_philo {
 	int				id;
 	pthread_mutex_t	*fork[2];
-	bool			alive;
 	struct timeval	last_eaten;
 	t_data			*data;
 }	t_philo;
@@ -90,11 +95,10 @@ void			destroy_mutexes(t_data *data);
 void			cleanup_data(t_data *data);
 int				cleanup_and_return(t_data *data, int rval);
 /*----------------------------------------------------------------------------*/
-
 void			*philo_routine(void *arg);
-void			philo_eat(t_philo *philo);
-void			philo_sleep(t_philo *philo);
-void			philo_think(t_philo *philo);
+int				philo_eat(t_philo *philo);
+int				philo_sleep(t_philo *philo);
+int				philo_think(t_philo *philo);
 
 bool			should_be_dead(t_philo *philo);
 
@@ -104,4 +108,5 @@ unsigned long	time_diff_ms(const struct timeval *t1, \
 unsigned long	ms_from_sim_start(const t_data *data);
 void			wait_till_start(const t_philo *philo);
 
+int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
 #endif

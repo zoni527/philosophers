@@ -11,6 +11,8 @@
 /* ************************************************************************** */
 
 #include "philosophers.h"
+#include <pthread.h>
+#include <sys/time.h>
 
 int	main(int argc, char *argv[])
 {
@@ -27,7 +29,11 @@ int	main(int argc, char *argv[])
 	if (initialize_mutexes(&data) == FAILURE)
 		return (cleanup_and_return(&data, E_MUTEX));
 	setup_philosophers(&data);
-	create_threads(&data);
+	if (create_threads(&data) == FAILURE)
+	{
+		destroy_mutexes(&data);
+		return (cleanup_and_return(&data, E_THREAD));
+	}
 	merge_threads(&data);
 	destroy_mutexes(&data);
 	cleanup_data(&data);
@@ -50,9 +56,9 @@ int	setup_data(t_data *data, int argc, char *argv[])
 	if (argc > 5)
 		data->n_meals = atou(argv[5]);
 	gettimeofday(&time, NULL);
-	data->start_time.tv_sec = time.tv_sec + START_DELAY_S;
+	data->start_time.tv_sec = 0;
 	data->start_time.tv_usec = 0;
-	data->sim_active = true;
+	data->sim_active = false;
 	return (SUCCESS);
 }
 
@@ -86,7 +92,6 @@ void	setup_philosophers(t_data *data)
 		data->philos[i].id = i + 1;
 		data->philos[i].fork[LEFT] = &data->forks[i];
 		data->philos[i].fork[RIGHT] = &data->forks[(i + 1) % data->n_philos];
-		data->philos[i].alive = true;
 		data->philos[i].last_eaten = data->start_time;
 		data->philos[i].data = data;
 		i++;
@@ -96,6 +101,7 @@ void	setup_philosophers(t_data *data)
 int	create_threads(t_data *data)
 {
 	unsigned int	i;
+	struct timeval	time;
 
 	i = 0;
 	while (i < data->n_philos)
@@ -109,6 +115,13 @@ int	create_threads(t_data *data)
 		}
 		i++;
 	}
+	gettimeofday(&time, NULL);
+	data->start_time.tv_sec = time.tv_sec + 1;
+	data->start_time.tv_usec = 599999;
+	i = 0;
+	while (i < data->n_philos)
+		data->philos[i++].last_eaten = data->start_time;
+	data->sim_active = true;
 	return (SUCCESS);
 }
 
@@ -231,68 +244,6 @@ bool	should_be_dead(t_philo *philo)
 	return (false);
 }
 
-void	philo_eat(t_philo *philo)
-{
-	struct timeval	time;
-	unsigned long	ms_from_start_time;
-
-	if (should_be_dead(philo))
-	{
-		pthread_mutex_lock(&philo->data->sim_lock);
-		philo->data->sim_active = false;
-		pthread_mutex_unlock(&philo->data->sim_lock);
-		gettimeofday(&time, NULL);
-		ms_from_start_time = time_diff_ms(&philo->data->start_time, &time);
-		printf("%lu %d died\n", ms_from_start_time, philo->id);
-		return ;
-	}
-	pthread_mutex_lock(philo->fork[LEFT]);
-	gettimeofday(&time, NULL);
-	ms_from_start_time = time_diff_ms(&philo->data->start_time, &time);
-	printf("%lu %d has taken a fork\n", ms_from_start_time, philo->id);
-	pthread_mutex_lock(philo->fork[RIGHT]);
-	gettimeofday(&time, NULL);
-	ms_from_start_time = time_diff_ms(&philo->data->start_time, &time);
-	printf("%lu %d has taken a fork\n", ms_from_start_time, philo->id);
-	gettimeofday(&time, NULL);
-	printf("%lu %d is eating\n", ms_from_start_time, philo->id);
-	philo->last_eaten = time;
-	while (time_diff_ms(&philo->last_eaten, &time) < philo->data->time_to_die)
-	{
-		usleep(TICK);
-		gettimeofday(&time, NULL);
-	}
-	pthread_mutex_unlock(philo->fork[LEFT]);
-	pthread_mutex_unlock(philo->fork[RIGHT]);
-}
-
-void	philo_sleep(t_philo *philo)
-{
-	struct timeval	t1;
-	struct timeval	t2;
-	unsigned long	ms;
-
-	if (should_be_dead(philo))
-	{
-		pthread_mutex_lock(&philo->data->sim_lock);
-		philo->data->sim_active = false;
-		pthread_mutex_unlock(&philo->data->sim_lock);
-		gettimeofday(&t1, NULL);
-		ms = time_diff_ms(&philo->data->start_time, &t1);
-		printf("%lu %d died\n", ms, philo->id);
-		return ;
-	}
-	gettimeofday(&t1, NULL);
-	gettimeofday(&t2, NULL);
-	ms = time_diff_ms(&t1, &t2);
-	while (ms < philo->data->time_to_sleep)
-	{
-		usleep(TICK);
-		gettimeofday(&t2, NULL);
-		ms = time_diff_ms(&t1, &t2);
-	}
-}
-
 unsigned long	ms_from_sim_start(const t_data *data)
 {
 	struct timeval	time;
@@ -303,21 +254,115 @@ unsigned long	ms_from_sim_start(const t_data *data)
 	return (ms);
 }
 
-void	philo_think(t_philo *philo)
+int	stop_sim_and_report_death(t_philo *philo)
+{
+	if (philo->data->sim_active == false)
+		return (DEAD);
+	pthread_mutex_lock(&philo->data->sim_lock);
+	philo->data->sim_active = false;
+	printf("%lu %d died\n", ms_from_sim_start(philo->data), philo->id);
+	pthread_mutex_unlock(&philo->data->sim_lock);
+	return (DEAD);
+}
+
+void	*philo_routine(void *arg)
+{
+	t_philo	*philo;
+
+	philo = (t_philo *)arg;
+	while (philo->data->sim_active == false)
+		usleep(TICK);
+	wait_till_start(philo);
+	if (philo->id % 2 != 0)
+		philo_think(philo);
+	while (philo->data->sim_active)
+	{
+		if (philo_eat(philo) == DEAD)
+			break ;
+		if (philo_sleep(philo) == DEAD)
+			break ;
+		if (philo_think(philo) == DEAD)
+			break ;
+	}
+	return (NULL);
+}
+
+void	lock_and_report_activity(t_philo *philo, char *activity)
+{
+	if (philo->data->sim_active == false)
+		return ;
+	pthread_mutex_lock(&philo->data->sim_lock);
+	printf("%lu %d %s\n", ms_from_sim_start(philo->data), philo->id, activity);
+	pthread_mutex_unlock(&philo->data->sim_lock);
+}
+
+int	philo_eat(t_philo *philo)
 {
 	struct timeval	time;
 
+	if (!philo->data->sim_active)
+		return (DEAD);
 	if (should_be_dead(philo))
-	{
-		pthread_mutex_lock(&philo->data->sim_lock);
-		philo->data->sim_active = false;
-		pthread_mutex_unlock(&philo->data->sim_lock);
-		gettimeofday(&time, NULL);
-		printf("%lu %d died\n", ms_from_sim_start(philo->data), philo->id);
-		return ;
-	}
+		return (stop_sim_and_report_death(philo));
+	pthread_mutex_lock(philo->fork[(philo->id + 1) % 2]);
+	if (should_be_dead(philo))
+		return (stop_sim_and_report_death(philo));
+	lock_and_report_activity(philo, M_TAKEN_FORK);
+	pthread_mutex_lock(philo->fork[(philo->id + 2) % 2]);
+	if (should_be_dead(philo))
+		return (stop_sim_and_report_death(philo));
+	lock_and_report_activity(philo, M_TAKEN_FORK);
 	gettimeofday(&time, NULL);
-	printf("%lu %d is thinking\n", ms_from_sim_start(philo->data), philo->id);
+	philo->last_eaten = time;
+	lock_and_report_activity(philo, M_EATING);
+	if (wait_and_try_not_to_die(philo, philo->data->time_to_eat) == DEAD)
+		return (DEAD);
+	pthread_mutex_unlock(philo->fork[LEFT]);
+	pthread_mutex_unlock(philo->fork[RIGHT]);
+	return (ALIVE);
+}
+
+int	wait_and_try_not_to_die(t_philo *philo, unsigned long ms)
+{
+	unsigned long	us_waited;
+
+	if (philo->data->sim_active == false)
+		return (DEAD);
+	if (should_be_dead(philo))
+		return (stop_sim_and_report_death(philo));
+	us_waited = 0;
+	while (us_waited < ms * 1000)
+	{
+		usleep(TICK);
+		if (philo->data->sim_active == false)
+			return (DEAD);
+		if (should_be_dead(philo))
+			return (stop_sim_and_report_death(philo));
+		us_waited += TICK;
+	}
+	return (ALIVE);
+}
+
+int	philo_sleep(t_philo *philo)
+{
+	if (!philo->data->sim_active)
+		return (DEAD);
+	if (should_be_dead(philo))
+		return (stop_sim_and_report_death(philo));
+	lock_and_report_activity(philo, M_SLEEPING);
+	if (wait_and_try_not_to_die(philo, philo->data->time_to_sleep) == DEAD)
+		return (DEAD);
+	return (ALIVE);
+}
+
+int	philo_think(t_philo *philo)
+{
+	if (!philo->data->sim_active)
+		return (DEAD);
+	if (should_be_dead(philo))
+		return (stop_sim_and_report_death(philo));
+	lock_and_report_activity(philo, "is thinking");
+	return (ALIVE);
 }
 
 void	wait_till_start(const t_philo *philo)
@@ -331,25 +376,6 @@ void	wait_till_start(const t_philo *philo)
 		usleep(TICK);
 		gettimeofday(&time, NULL);
 	}
-}
-
-void	*philo_routine(void *arg)
-{
-	t_philo	*philo;
-	int		i;
-
-	philo = (t_philo *)arg;
-	wait_till_start(philo);
-	if (philo->id % 2 != 0)
-		philo_think(philo);
-	i = -1;
-	while (philo->data->sim_active)
-	{
-		philo_eat(philo);
-		philo_sleep(philo);
-		philo_think(philo);
-	}
-	return (NULL);
 }
 
 void	destroy_mutexes(t_data *data)
@@ -379,5 +405,5 @@ void	merge_threads(t_data *data)
 int	cleanup_and_return(t_data *data, int rval)
 {
 	cleanup_data(data);
-	return rval;
+	return (rval);
 }
