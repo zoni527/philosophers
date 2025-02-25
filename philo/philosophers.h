@@ -57,8 +57,15 @@ typedef struct s_data t_data;
 typedef struct s_philo {
 	int				id;
 	pthread_mutex_t	*fork[2];
+	pthread_mutex_t	*sim_lock;
+	bool			is_dead;
+	bool			*sim_active;
+	unsigned long	*time_to_die;
+	unsigned long	*time_to_eat;
+	unsigned long	*time_to_sleep;
+	unsigned int	*n_meals;
 	struct timeval	last_eaten;
-	t_data			*data;
+	struct timeval	*start_time;
 }	t_philo;
 
 typedef struct s_data {
@@ -82,6 +89,8 @@ int				initialize_mutexes(t_data *data);
 void			setup_philosophers(t_data *data);
 int				create_threads(t_data *data);
 /*----------------------------------------------------------------------------*/
+void			monitor(t_data *data);
+/*----------------------------------------------------------------------------*/
 int				printendl_and_return(const char *str, int rval);
 int				print_input_error(int error);
 /*----------------------------------------------------------------------------*/
@@ -99,14 +108,14 @@ void			*philo_routine(void *arg);
 int				philo_eat(t_philo *philo);
 int				philo_sleep(t_philo *philo);
 int				philo_think(t_philo *philo);
-
+/*----------------------------------------------------------------------------*/
 bool			should_be_dead(t_philo *philo);
-
+bool			sim_active(t_philo *philo);
+/*----------------------------------------------------------------------------*/
 unsigned long	time_diff_ms(const struct timeval *t1, \
 						   const struct timeval *t2);
-
-unsigned long	ms_from_sim_start(const t_data *data);
+unsigned long	ms_from_start(const struct timeval *start_time);
 void			wait_till_start(const t_philo *philo);
-
 int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
+
 #endif

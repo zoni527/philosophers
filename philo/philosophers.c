@@ -17,13 +17,13 @@
 int	main(int argc, char *argv[])
 {
 	static t_data	data;
-	int				rval;
+	int				inputs_ok;
 
 	if (argc < 5 || argc > 6)
 		return (printendl_and_return(M_INPUT_EXAMPLE, E_INPUT));
-	rval = input_check(argv);
-	if (rval != 0)
-		return (print_input_error(rval));
+	inputs_ok = input_check(argv);
+	if (inputs_ok != SUCCESS)
+		return (print_input_error(inputs_ok));
 	if (setup_data(&data, argc, argv) == FAILURE)
 		return (cleanup_and_return(&data, E_ALLOC));
 	if (initialize_mutexes(&data) == FAILURE)
@@ -66,6 +66,8 @@ int	initialize_mutexes(t_data *data)
 {
 	unsigned int	i;
 
+	if (pthread_mutex_init(&data->sim_lock, NULL))
+		return (FAILURE);
 	i = 0;
 	while (i < data->n_philos)
 	{
@@ -73,6 +75,7 @@ int	initialize_mutexes(t_data *data)
 		{
 			while (i--)
 				pthread_mutex_destroy(&data->forks[i]);
+			pthread_mutex_destroy(&data->sim_lock);
 			return (FAILURE);
 		}
 		i++;
@@ -92,17 +95,36 @@ void	setup_philosophers(t_data *data)
 		data->philos[i].id = i + 1;
 		data->philos[i].fork[LEFT] = &data->forks[i];
 		data->philos[i].fork[RIGHT] = &data->forks[(i + 1) % data->n_philos];
+		data->philos[i].sim_lock = &data->sim_lock;
+		data->philos[i].is_dead = false;
+		data->philos[i].sim_active = &data->sim_active;
+		data->philos[i].time_to_die = &data->time_to_die;
+		data->philos[i].time_to_eat = &data->time_to_eat;
+		data->philos[i].time_to_sleep = &data->time_to_sleep;
 		data->philos[i].last_eaten = data->start_time;
-		data->philos[i].data = data;
+		data->philos[i].start_time = &data->start_time;
 		i++;
 	}
+}
+
+void	set_start_times(t_data *data)
+{
+	struct timeval	time;
+	unsigned int	i;
+
+	gettimeofday(&time, NULL);
+	data->start_time.tv_sec = time.tv_sec + 2;
+	data->start_time.tv_usec = 0;
+	i = 0;
+	while (i < data->n_philos)
+		data->philos[i++].last_eaten = data->start_time;
 }
 
 int	create_threads(t_data *data)
 {
 	unsigned int	i;
-	struct timeval	time;
 
+	pthread_mutex_lock(&data->sim_lock);
 	i = 0;
 	while (i < data->n_philos)
 	{
@@ -111,17 +133,14 @@ int	create_threads(t_data *data)
 		{
 			while (i--)
 				pthread_join(data->threads[i], NULL);
+			pthread_mutex_unlock(&data->sim_lock);
 			return (FAILURE);
 		}
 		i++;
 	}
-	gettimeofday(&time, NULL);
-	data->start_time.tv_sec = time.tv_sec + 1;
-	data->start_time.tv_usec = 599999;
-	i = 0;
-	while (i < data->n_philos)
-		data->philos[i++].last_eaten = data->start_time;
+	set_start_times(data);
 	data->sim_active = true;
+	pthread_mutex_unlock(&data->sim_lock);
 	return (SUCCESS);
 }
 
@@ -239,29 +258,30 @@ bool	should_be_dead(t_philo *philo)
 
 	gettimeofday(&time, NULL);
 	ms_from_last_eaten = time_diff_ms(&philo->last_eaten, &time);
-	if (ms_from_last_eaten > philo->data->time_to_die)
+	if (ms_from_last_eaten > *philo->time_to_die)
 		return (true);
 	return (false);
 }
 
-unsigned long	ms_from_sim_start(const t_data *data)
+unsigned long	ms_from_start(const struct timeval *start_time)
 {
 	struct timeval	time;
 	unsigned long	ms;
 
 	gettimeofday(&time, NULL);
-	ms = time_diff_ms(&data->start_time, &time);
+	ms = time_diff_ms(start_time, &time);
 	return (ms);
 }
 
-int	stop_sim_and_report_death(t_philo *philo)
+int	die_and_report(t_philo *philo)
 {
-	if (philo->data->sim_active == false)
+	if (!sim_active(philo))
 		return (DEAD);
-	pthread_mutex_lock(&philo->data->sim_lock);
-	philo->data->sim_active = false;
-	printf("%lu %d died\n", ms_from_sim_start(philo->data), philo->id);
-	pthread_mutex_unlock(&philo->data->sim_lock);
+	pthread_mutex_lock(philo->sim_lock);
+	philo->is_dead = true;
+	printf("%lu %d died\n", ms_from_start(philo->start_time), philo->id);
+	*philo->sim_active = false;
+	pthread_mutex_unlock(philo->sim_lock);
 	return (DEAD);
 }
 
@@ -270,12 +290,12 @@ void	*philo_routine(void *arg)
 	t_philo	*philo;
 
 	philo = (t_philo *)arg;
-	while (philo->data->sim_active == false)
+	while (!sim_active(philo))
 		usleep(TICK);
 	wait_till_start(philo);
 	if (philo->id % 2 != 0)
 		philo_think(philo);
-	while (philo->data->sim_active)
+	while (sim_active(philo))
 	{
 		if (philo_eat(philo) == DEAD)
 			break ;
@@ -287,36 +307,47 @@ void	*philo_routine(void *arg)
 	return (NULL);
 }
 
-void	lock_and_report_activity(t_philo *philo, char *activity)
+void	lock_and_report_activity(t_philo *philo, char *msg)
 {
-	if (philo->data->sim_active == false)
+	if (!sim_active(philo))
 		return ;
-	pthread_mutex_lock(&philo->data->sim_lock);
-	printf("%lu %d %s\n", ms_from_sim_start(philo->data), philo->id, activity);
-	pthread_mutex_unlock(&philo->data->sim_lock);
+	pthread_mutex_lock(philo->sim_lock);
+	printf("%lu %d %s\n", ms_from_start(philo->start_time), philo->id, msg);
+	pthread_mutex_unlock(philo->sim_lock);
 }
 
 int	philo_eat(t_philo *philo)
 {
 	struct timeval	time;
 
-	if (!philo->data->sim_active)
+	if (!sim_active(philo))
 		return (DEAD);
 	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
+		return (die_and_report(philo));
 	pthread_mutex_lock(philo->fork[(philo->id + 1) % 2]);
-	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
 	lock_and_report_activity(philo, M_TAKEN_FORK);
+	if (should_be_dead(philo))
+	{
+		pthread_mutex_unlock(philo->fork[(philo->id + 1) % 2]);
+		return (die_and_report(philo));
+	}
 	pthread_mutex_lock(philo->fork[(philo->id + 2) % 2]);
-	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
 	lock_and_report_activity(philo, M_TAKEN_FORK);
+	if (should_be_dead(philo))
+	{
+		pthread_mutex_unlock(philo->fork[LEFT]);
+		pthread_mutex_unlock(philo->fork[RIGHT]);
+		return (die_and_report(philo));
+	}
 	gettimeofday(&time, NULL);
 	philo->last_eaten = time;
 	lock_and_report_activity(philo, M_EATING);
-	if (wait_and_try_not_to_die(philo, philo->data->time_to_eat) == DEAD)
+	if (wait_and_try_not_to_die(philo, *philo->time_to_eat) == DEAD)
+	{
+		pthread_mutex_unlock(philo->fork[LEFT]);
+		pthread_mutex_unlock(philo->fork[RIGHT]);
 		return (DEAD);
+	}
 	pthread_mutex_unlock(philo->fork[LEFT]);
 	pthread_mutex_unlock(philo->fork[RIGHT]);
 	return (ALIVE);
@@ -324,43 +355,57 @@ int	philo_eat(t_philo *philo)
 
 int	wait_and_try_not_to_die(t_philo *philo, unsigned long ms)
 {
-	unsigned long	us_waited;
+	struct timeval	t1;
+	struct timeval	t2;
+	unsigned long	ms_waited;
 
-	if (philo->data->sim_active == false)
+	if (!sim_active(philo))
 		return (DEAD);
 	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
-	us_waited = 0;
-	while (us_waited < ms * 1000)
+		return (die_and_report(philo));
+	gettimeofday(&t1, NULL);
+	ms_waited = 0;
+	while (ms_waited < ms)
 	{
 		usleep(TICK);
-		if (philo->data->sim_active == false)
+		if (!sim_active(philo))
 			return (DEAD);
 		if (should_be_dead(philo))
-			return (stop_sim_and_report_death(philo));
-		us_waited += TICK;
+			return (die_and_report(philo));
+		gettimeofday(&t2, NULL);
+		ms_waited = time_diff_ms(&t1, &t2);
 	}
 	return (ALIVE);
 }
 
+bool	sim_active(t_philo *philo)
+{
+	bool	rval;
+
+	pthread_mutex_lock(philo->sim_lock);
+	rval = *philo->sim_active;
+	pthread_mutex_unlock(philo->sim_lock);
+	return (rval);
+}
+
 int	philo_sleep(t_philo *philo)
 {
-	if (!philo->data->sim_active)
+	if (!sim_active(philo))
 		return (DEAD);
 	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
+		return (die_and_report(philo));
 	lock_and_report_activity(philo, M_SLEEPING);
-	if (wait_and_try_not_to_die(philo, philo->data->time_to_sleep) == DEAD)
+	if (wait_and_try_not_to_die(philo, *philo->time_to_sleep) == DEAD)
 		return (DEAD);
 	return (ALIVE);
 }
 
 int	philo_think(t_philo *philo)
 {
-	if (!philo->data->sim_active)
+	if (!sim_active(philo))
 		return (DEAD);
 	if (should_be_dead(philo))
-		return (stop_sim_and_report_death(philo));
+		return (die_and_report(philo));
 	lock_and_report_activity(philo, "is thinking");
 	return (ALIVE);
 }
@@ -370,8 +415,8 @@ void	wait_till_start(const t_philo *philo)
 	struct timeval	time;
 
 	gettimeofday(&time, NULL);
-	while (time.tv_usec < philo->data->start_time.tv_usec \
-		|| time.tv_sec < philo->data->start_time.tv_sec)
+	while (time.tv_usec < philo->start_time->tv_usec \
+		|| time.tv_sec < philo->start_time->tv_sec)
 	{
 		usleep(TICK);
 		gettimeofday(&time, NULL);
@@ -388,6 +433,7 @@ void	destroy_mutexes(t_data *data)
 		pthread_mutex_destroy(&data->forks[i]);
 		i++;
 	}
+	pthread_mutex_destroy(&data->sim_lock);
 }
 
 void	merge_threads(t_data *data)
