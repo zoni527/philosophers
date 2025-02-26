@@ -16,6 +16,9 @@ static int	putendl_and_return(const char *str, int rval);
 
 int	die_and_stop_the_party(t_philo *philo)
 {
+	struct timeval	time;
+	unsigned int	ms;
+
 	pthread_mutex_lock(philo->sim_lock);
 	if (*philo->sim_active == false)
 	{
@@ -23,8 +26,15 @@ int	die_and_stop_the_party(t_philo *philo)
 		return (STOP_THE_PARTY);
 	}
 	philo->is_dead = true;
-	printf("%u %u died\n", ms_from_start(philo->start_time), philo->id);
-	printf("Time since last meal: %u\n", ms_from_start(&philo->last_eaten));
+	gettimeofday(&time, NULL);
+	ms = ms_from_start(philo->start_time);
+	printf("%u %u died\n", ms, philo->id);
+	ms = ms_from_start(&philo->last_eaten);
+	printf("Time since last meal: %u\n", ms);
+	printf("philo->start_time->tv_sec:  %lu\n", philo->start_time->tv_sec);
+	printf("philo->last_eaten->tv_sec:  %lu\n", philo->last_eaten.tv_sec);
+	printf("philo->start_time->tv_usec: %lu\n", philo->start_time->tv_usec);
+	printf("philo->last_eaten->tv_usec: %lu\n", philo->last_eaten.tv_usec);
 	*philo->sim_active = false;
 	pthread_mutex_unlock(philo->sim_lock);
 	return (STOP_THE_PARTY);

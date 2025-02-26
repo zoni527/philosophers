@@ -18,6 +18,8 @@ unsigned int	time_diff_ms(const struct timeval *t1, const struct timeval *t2)
 	int	microseconds;
 	int	milliseconds;
 
+	if (t1->tv_sec == t2->tv_sec && t1->tv_usec == t2->tv_usec)
+		return (0);
 	seconds = (int)(t2->tv_sec - t1->tv_sec);
 	microseconds = (int)(t2->tv_usec - t1->tv_usec);
 	milliseconds = (unsigned int)(seconds * 1000 + microseconds / 1000);
