@@ -239,15 +239,15 @@ void	cleanup_data(t_data *data)
 	data->threads = NULL;
 }
 
-unsigned long	time_diff_ms(const struct timeval *t1, const struct timeval *t2)
+unsigned int	time_diff_ms(const struct timeval *t1, const struct timeval *t2)
 {
-	unsigned long	seconds;
-	unsigned long	microseconds;
-	unsigned long	milliseconds;
+	int	seconds;
+	int	microseconds;
+	int	milliseconds;
 
-	seconds = t2->tv_sec - t1->tv_sec;
-	microseconds = t2->tv_usec - t1->tv_usec;
-	milliseconds = seconds * 1000 + microseconds / 1000;
+	seconds = (int)(t2->tv_sec - t1->tv_sec);
+	microseconds = (int)(t2->tv_usec - t1->tv_usec);
+	milliseconds = (unsigned int)(seconds * 1000 + microseconds / 1000);
 	return (milliseconds);
 }
 
@@ -263,7 +263,7 @@ bool	should_be_dead(t_philo *philo)
 	return (false);
 }
 
-unsigned long	ms_from_start(const struct timeval *start_time)
+unsigned int	ms_from_start(const struct timeval *start_time)
 {
 	struct timeval	time;
 	unsigned long	ms;
@@ -275,11 +275,14 @@ unsigned long	ms_from_start(const struct timeval *start_time)
 
 int	die_and_report(t_philo *philo)
 {
-	if (!sim_active(philo))
-		return (DEAD);
 	pthread_mutex_lock(philo->sim_lock);
+	if (philo->sim_active == false)
+	{
+		pthread_mutex_unlock(philo->sim_lock);
+		return (DEAD);
+	}
 	philo->is_dead = true;
-	printf("%lu %d died\n", ms_from_start(philo->start_time), philo->id);
+	printf("%u %u died\n", ms_from_start(philo->start_time), philo->id);
 	*philo->sim_active = false;
 	pthread_mutex_unlock(philo->sim_lock);
 	return (DEAD);
@@ -309,10 +312,13 @@ void	*philo_routine(void *arg)
 
 void	lock_and_report_activity(t_philo *philo, char *msg)
 {
-	if (!sim_active(philo))
-		return ;
 	pthread_mutex_lock(philo->sim_lock);
-	printf("%lu %d %s\n", ms_from_start(philo->start_time), philo->id, msg);
+	if (philo->sim_active == false)
+	{
+		pthread_mutex_unlock(philo->sim_lock);
+		return ;
+	}
+	printf("%u %u %s\n", ms_from_start(philo->start_time), philo->id, msg);
 	pthread_mutex_unlock(philo->sim_lock);
 }
 

@@ -55,7 +55,7 @@
 typedef struct s_data t_data;
 
 typedef struct s_philo {
-	int				id;
+	unsigned int	id;
 	pthread_mutex_t	*fork[2];
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
@@ -112,9 +112,9 @@ int				philo_think(t_philo *philo);
 bool			should_be_dead(t_philo *philo);
 bool			sim_active(t_philo *philo);
 /*----------------------------------------------------------------------------*/
-unsigned long	time_diff_ms(const struct timeval *t1, \
+unsigned int	time_diff_ms(const struct timeval *t1, \
 						   const struct timeval *t2);
-unsigned long	ms_from_start(const struct timeval *start_time);
+unsigned int	ms_from_start(const struct timeval *start_time);
 void			wait_till_start(const t_philo *philo);
 int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
 
