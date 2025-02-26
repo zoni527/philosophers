@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philosophers.h                                     :+:      :+:    :+:   */
+/*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/21 09:34:45 by jvarila           #+#    #+#             */
-/*   Updated: 2025/02/21 16:38:18 by jvarila          ###   ########.fr       */
+/*   Updated: 2025/02/26 16:32:35 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PHILOSOPHERS_H
-# define PHILOSOPHERS_H
+#ifndef PHILO_H
+# define PHILO_H
 
 # include <stdlib.h>
 # include <pthread.h>
@@ -26,8 +26,8 @@
 # define SUCCESS		0
 # define FAILURE		1
 
-# define ALIVE			0
-# define DEAD			1
+# define PARTY_ON		0
+# define STOP_THE_PARTY	1
 
 # define TICK			100
 
@@ -39,10 +39,6 @@
 # define E_MUTEX		6
 # define E_THREAD		7
 
-# define M_INPUT_EXAMPLE	"Inputs (positive integers, time unit is ms):\n" \
-							"./philo <N of philos> <T to die> <T to eat> " \
-							"<T to sleep> (opt)<N of meals>"
-
 # define M_NAN				"ERROR: only input positive numbers"
 # define M_OVERFLOW			"ERROR: don't try to overflow inputs"
 # define M_ZERO				"ERROR: use numbers larger than zero"
@@ -52,7 +48,7 @@
 # define M_SLEEPING		"is sleeping"
 # define M_THINKING		"is thinking"
 
-typedef struct s_data t_data;
+typedef struct s_data	t_data;
 
 typedef struct s_philo {
 	unsigned int	id;
@@ -60,10 +56,11 @@ typedef struct s_philo {
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
 	bool			*sim_active;
-	unsigned long	*time_to_die;
-	unsigned long	*time_to_eat;
-	unsigned long	*time_to_sleep;
+	unsigned long	*t_to_die;
+	unsigned long	*t_to_eat;
+	unsigned long	*t_to_sleep;
 	unsigned int	*n_meals;
+	unsigned int	meals_eaten;
 	struct timeval	last_eaten;
 	struct timeval	*start_time;
 }	t_philo;
@@ -75,47 +72,48 @@ typedef struct s_data {
 	pthread_mutex_t	*forks;
 	pthread_t		*threads;
 	unsigned int	n_philos;
-	unsigned long	time_to_die;
-	unsigned long	time_to_eat;
-	unsigned long	time_to_sleep;
+	unsigned long	t_to_die;
+	unsigned long	t_to_eat;
+	unsigned long	t_to_sleep;
 	unsigned int	n_meals;
 	struct timeval	start_time;
 }	t_data;
 
-/*----------------------------------------------------------------------------*/
+/* philo_main.c --------------------------------------------------------------*/
 int				main(int argc, char *argv[]);
+/* philo_data_setup.c --------------------------------------------------------*/
 int				setup_data(t_data *data, int argc, char *argv[]);
 int				initialize_mutexes(t_data *data);
 void			setup_philosophers(t_data *data);
 int				create_threads(t_data *data);
-/*----------------------------------------------------------------------------*/
-void			monitor(t_data *data);
-/*----------------------------------------------------------------------------*/
-int				printendl_and_return(const char *str, int rval);
-int				print_input_error(int error);
-/*----------------------------------------------------------------------------*/
+/* philo_activities.c --------------------------------------------------------*/
+void			*philo_routine(void *arg);
+bool			sim_active(t_philo *philo);
+/* philo_time_management.c ---------------------------------------------------*/
+unsigned int	time_diff_ms(const struct timeval *t1, \
+						const struct timeval *t2);
+unsigned int	ms_from_start(const struct timeval *start_time);
+void			wait_till_start(const struct timeval *start_time);
+int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
+void			set_start_times(t_data *data);
+/* philo_input.c -------------------------------------------------------------*/
 int				input_check(char *argv[]);
 unsigned int	atou(const char *str);
-bool			is_a_positive_number(const char *str);
-bool			overflows(const char *str);
-/*----------------------------------------------------------------------------*/
+/* philo_output.c ------------------------------------------------------------*/
+int				die_and_stop_the_party(t_philo *philo);
+int				lock_and_report_activity(t_philo *philo, char *msg);
+int				print_input_error(int error);
+int				print_input_example(void);
+/* philo_cleanup.c -----------------------------------------------------------*/
 void			merge_threads(t_data *data);
 void			destroy_mutexes(t_data *data);
 void			cleanup_data(t_data *data);
 int				cleanup_and_return(t_data *data, int rval);
-/*----------------------------------------------------------------------------*/
-void			*philo_routine(void *arg);
-int				philo_eat(t_philo *philo);
-int				philo_sleep(t_philo *philo);
-int				philo_think(t_philo *philo);
-/*----------------------------------------------------------------------------*/
+/* philo_utils.c -------------------------------------------------------------*/
+int				take_first_fork(t_philo *philo);
+int				take_second_fork(t_philo *philo);
+int				starve(t_philo *philo);
+void			unlock_forks(t_philo *philo);
 bool			should_be_dead(t_philo *philo);
-bool			sim_active(t_philo *philo);
 /*----------------------------------------------------------------------------*/
-unsigned int	time_diff_ms(const struct timeval *t1, \
-						   const struct timeval *t2);
-unsigned int	ms_from_start(const struct timeval *start_time);
-void			wait_till_start(const t_philo *philo);
-int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
-
 #endif

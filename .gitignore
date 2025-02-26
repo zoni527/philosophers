@@ -50,6 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-a.out
+
 philo/philo
+philo/obj
 *.swo
+*.log
+*.txt
+*.temp

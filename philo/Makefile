@@ -6,7 +6,7 @@
 #    By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/21 10:37:20 by jvarila           #+#    #+#              #
-#    Updated: 2025/02/21 10:37:21 by jvarila          ###   ########.fr        #
+#    Updated: 2025/02/26 16:06:29 by jvarila          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,11 +20,18 @@ SRCDIR		:= ./
 INCDIR		:= ./
 OBJDIR		:= ./obj
 #------------------------------------------------------------------------------#
-SRC	:=	philosophers.c
+SRC	:=	philo_main.c		\
+		philo_data_setup.c	\
+		philo_activities.c	\
+		philo_time_management.c	\
+		philo_input.c		\
+		philo_output.c		\
+		philo_cleanup.c		\
+		philo_utils.c
 
 OBJ		:= $(addprefix $(OBJDIR)/, $(SRC:.c=.o))
 #------------------------------------------------------------------------------#
-PHILOH		:= $(INCDIR)/philosophers.h
+PHILOH		:= $(INCDIR)/philo.h
 INC		:= -I $(INCDIR)
 #------------------------------------------------------------------------------#
 all: $(NAME)
