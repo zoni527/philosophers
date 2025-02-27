@@ -20,12 +20,13 @@ int	die_and_stop_the_party(t_philo *philo)
 	if (*philo->sim_active == false)
 	{
 		pthread_mutex_unlock(philo->sim_lock);
+		drop_forks(philo);
 		return (STOP_THE_PARTY);
 	}
 	philo->is_dead = true;
-	printf("%u %u died\n", ms_from_start(philo->start_time), philo->id);
-	printf("Time since last meal: %u\n", ms_from_start(&philo->last_eaten));
+	printf("%ld %u died\n", ms_from_time(philo->start_time), philo->id);
 	*philo->sim_active = false;
+	drop_forks(philo);
 	pthread_mutex_unlock(philo->sim_lock);
 	return (STOP_THE_PARTY);
 }
@@ -38,7 +39,7 @@ int	lock_and_report_activity(t_philo *philo, char *msg)
 		pthread_mutex_unlock(philo->sim_lock);
 		return (STOP_THE_PARTY);
 	}
-	printf("%u %u %s\n", ms_from_start(philo->start_time), philo->id, msg);
+	printf("%ld %u %s\n", ms_from_time(philo->start_time), philo->id, msg);
 	pthread_mutex_unlock(philo->sim_lock);
 	return (PARTY_ON);
 }

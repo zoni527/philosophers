@@ -69,6 +69,8 @@ void	setup_philosophers(t_data *data)
 		data->philos[i].id = i + 1;
 		data->philos[i].fork[LEFT] = &data->forks[i];
 		data->philos[i].fork[RIGHT] = &data->forks[(i + 1) % data->n_philos];
+		data->philos[i].forks_held[LEFT] = false;
+		data->philos[i].forks_held[RIGHT] = false;
 		data->philos[i].sim_lock = &data->sim_lock;
 		data->philos[i].is_dead = false;
 		data->philos[i].sim_active = &data->sim_active;

@@ -15,55 +15,49 @@
 int	take_first_fork(t_philo *philo)
 {
 	pthread_mutex_lock(philo->fork[(philo->id + 1) % 2]);
+	philo->forks_held[(philo->id + 1) % 2] = true;
 	if (lock_and_report_activity(philo, M_TAKEN_FORK) == STOP_THE_PARTY)
 	{
 		pthread_mutex_unlock(philo->fork[(philo->id + 1) % 2]);
 		return (STOP_THE_PARTY);
 	}
 	if (should_be_dead(philo))
-	{
-		pthread_mutex_unlock(philo->fork[(philo->id + 1) % 2]);
 		return (die_and_stop_the_party(philo));
-	}
 	return (PARTY_ON);
 }
 
 int	take_second_fork(t_philo *philo)
 {
 	pthread_mutex_lock(philo->fork[(philo->id + 2) % 2]);
+	philo->forks_held[(philo->id + 2) % 2] = true;
 	if (lock_and_report_activity(philo, M_TAKEN_FORK) == STOP_THE_PARTY)
 	{
-		pthread_mutex_unlock(philo->fork[LEFT]);
-		pthread_mutex_unlock(philo->fork[RIGHT]);
+		drop_forks(philo);
 		return (STOP_THE_PARTY);
 	}
 	if (should_be_dead(philo))
-	{
-		pthread_mutex_unlock(philo->fork[LEFT]);
-		pthread_mutex_unlock(philo->fork[RIGHT]);
 		return (die_and_stop_the_party(philo));
-	}
 	return (PARTY_ON);
 }
 
-int	starve(t_philo *philo)
+void	drop_forks(t_philo *philo)
 {
-	while (!should_be_dead(philo))
-		usleep(TICK);
-	die_and_stop_the_party(philo);
-	return (STOP_THE_PARTY);
-}
-
-void	unlock_forks(t_philo *philo)
-{
-	pthread_mutex_unlock(philo->fork[LEFT]);
-	pthread_mutex_unlock(philo->fork[RIGHT]);
+	if (philo->forks_held[LEFT])
+	{
+		pthread_mutex_unlock(philo->fork[LEFT]);
+		philo->forks_held[LEFT] = false;
+	}
+	if (philo->forks_held[RIGHT])
+	{
+		pthread_mutex_unlock(philo->fork[RIGHT]);
+		philo->forks_held[RIGHT] = false;
+	}
 }
 
 bool	should_be_dead(t_philo *philo)
 {
 	struct timeval	time;
-	unsigned long	ms_from_last_eaten;
+	long			ms_from_last_eaten;
 
 	gettimeofday(&time, NULL);
 	ms_from_last_eaten = time_diff_ms(&philo->last_eaten, &time);

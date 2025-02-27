@@ -53,12 +53,13 @@ typedef struct s_data	t_data;
 typedef struct s_philo {
 	unsigned int	id;
 	pthread_mutex_t	*fork[2];
+	bool			forks_held[2];
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
 	bool			*sim_active;
-	unsigned long	*t_to_die;
-	unsigned long	*t_to_eat;
-	unsigned long	*t_to_sleep;
+	unsigned int	*t_to_die;
+	unsigned int	*t_to_eat;
+	unsigned int	*t_to_sleep;
 	unsigned int	*n_meals;
 	unsigned int	meals_eaten;
 	struct timeval	last_eaten;
@@ -72,9 +73,9 @@ typedef struct s_data {
 	pthread_mutex_t	*forks;
 	pthread_t		*threads;
 	unsigned int	n_philos;
-	unsigned long	t_to_die;
-	unsigned long	t_to_eat;
-	unsigned long	t_to_sleep;
+	unsigned int	t_to_die;
+	unsigned int	t_to_eat;
+	unsigned int	t_to_sleep;
 	unsigned int	n_meals;
 	struct timeval	start_time;
 }	t_data;
@@ -90,11 +91,11 @@ int				create_threads(t_data *data);
 void			*philo_routine(void *arg);
 bool			sim_active(t_philo *philo);
 /* philo_time_management.c ---------------------------------------------------*/
-unsigned int	time_diff_ms(const struct timeval *t1, \
+long			time_diff_ms(const struct timeval *t1, \
 						const struct timeval *t2);
-unsigned int	ms_from_start(const struct timeval *start_time);
+long			ms_from_time(const struct timeval *start_time);
 void			wait_till_start(const struct timeval *start_time);
-int				wait_and_try_not_to_die(t_philo *philo, unsigned long ms);
+int				wait_and_try_not_to_die(t_philo *philo, long ms);
 void			set_start_times(t_data *data);
 /* philo_input.c -------------------------------------------------------------*/
 int				input_check(char *argv[]);
@@ -113,7 +114,7 @@ int				cleanup_and_return(t_data *data, int rval);
 int				take_first_fork(t_philo *philo);
 int				take_second_fork(t_philo *philo);
 int				starve(t_philo *philo);
-void			unlock_forks(t_philo *philo);
+void			drop_forks(t_philo *philo);
 bool			should_be_dead(t_philo *philo);
 /*----------------------------------------------------------------------------*/
 #endif

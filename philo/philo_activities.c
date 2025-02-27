@@ -35,6 +35,7 @@ void	*philo_routine(void *arg)
 		if (philo_think(philo) == STOP_THE_PARTY)
 			break ;
 	}
+	drop_forks(philo);
 	return (NULL);
 }
 
@@ -52,8 +53,6 @@ static int	philo_eat(t_philo *philo)
 {
 	struct timeval	time;
 
-	if (philo->fork[LEFT] == philo->fork[RIGHT])
-		return (starve(philo));
 	if (take_first_fork(philo) == STOP_THE_PARTY)
 		return (STOP_THE_PARTY);
 	if (take_second_fork(philo) == STOP_THE_PARTY)
@@ -65,15 +64,15 @@ static int	philo_eat(t_philo *philo)
 		return (STOP_THE_PARTY);
 	if (wait_and_try_not_to_die(philo, *philo->t_to_eat) == STOP_THE_PARTY)
 	{
-		unlock_forks(philo);
+		drop_forks(philo);
 		return (STOP_THE_PARTY);
 	}
 	if (*philo->n_meals != 0 && philo->meals_eaten >= *philo->n_meals)
 	{
-		unlock_forks(philo);
+		drop_forks(philo);
 		return (STOP_THE_PARTY);
 	}
-	unlock_forks(philo);
+	drop_forks(philo);
 	return (PARTY_ON);
 }
 

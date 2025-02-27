@@ -12,22 +12,22 @@
 
 #include "philo.h"
 
-unsigned int	time_diff_ms(const struct timeval *t1, const struct timeval *t2)
+long	time_diff_ms(const struct timeval *t1, const struct timeval *t2)
 {
-	int	seconds;
-	int	microseconds;
-	int	milliseconds;
+	long	seconds;
+	long	microseconds;
+	long	milliseconds;
 
-	seconds = (int)(t2->tv_sec - t1->tv_sec);
-	microseconds = (int)(t2->tv_usec - t1->tv_usec);
-	milliseconds = (unsigned int)(seconds * 1000 + microseconds / 1000);
+	seconds = t2->tv_sec - t1->tv_sec;
+	microseconds = t2->tv_usec - t1->tv_usec;
+	milliseconds = seconds * 1000 + microseconds / 1000;
 	return (milliseconds);
 }
 
-unsigned int	ms_from_start(const struct timeval *start_time)
+long	ms_from_time(const struct timeval *start_time)
 {
 	struct timeval	time;
-	unsigned int	ms;
+	long			ms;
 
 	gettimeofday(&time, NULL);
 	ms = time_diff_ms(start_time, &time);
@@ -47,11 +47,11 @@ void	wait_till_start(const struct timeval *start_time)
 	}
 }
 
-int	wait_and_try_not_to_die(t_philo *philo, unsigned long ms)
+int	wait_and_try_not_to_die(t_philo *philo, long ms)
 {
 	struct timeval	t1;
 	struct timeval	t2;
-	unsigned long	ms_waited;
+	long			ms_waited;
 
 	gettimeofday(&t1, NULL);
 	ms_waited = 0;

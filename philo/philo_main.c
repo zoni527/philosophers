@@ -44,19 +44,26 @@ int	main(int argc, char *argv[])
 static void	observe_the_party(t_data *data)
 {
 	unsigned int	i;
+	unsigned int	full_philos;
 
 	wait_till_start(&data->start_time);
 	while (sim_active(&data->philos[0]))
 	{
+		full_philos = 0;
 		i = 0;
 		while (i < data->n_philos)
 		{
-			if (should_be_dead(&data->philos[i]))
+			if (should_be_dead(&data->philos[i]) \
+				&& data->philos[i].meals_eaten < data->n_philos)
 			{
 				die_and_stop_the_party(&data->philos[i]);
 				break ;
 			}
+			if (data->philos[i].meals_eaten >= data->n_meals)
+				full_philos++;
 			i++;
 		}
+		if (full_philos == data->n_philos)
+			break ;
 	}
 }
