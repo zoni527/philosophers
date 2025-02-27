@@ -18,7 +18,7 @@ int	setup_data(t_data *data, int argc, char *argv[])
 
 	data->n_philos = atou(argv[1]);
 	data->philos = malloc(data->n_philos * sizeof(t_philo));
-	data->forks = malloc(data->n_philos * sizeof(pthread_mutex_t));
+	data->forks = malloc(data->n_philos * sizeof(t_fork));
 	data->threads = malloc(data->n_philos * sizeof(pthread_t));
 	if (!data->philos || !data->forks || !data->threads)
 		return (FAILURE);
@@ -45,10 +45,10 @@ int	initialize_mutexes(t_data *data)
 	i = 0;
 	while (i < data->n_philos)
 	{
-		if (pthread_mutex_init(&data->forks[i], NULL))
+		if (pthread_mutex_init(&data->forks[i].lock, NULL))
 		{
 			while (i--)
-				pthread_mutex_destroy(&data->forks[i]);
+				pthread_mutex_destroy(&data->forks[i].lock);
 			pthread_mutex_destroy(&data->sim_lock);
 			return (FAILURE);
 		}
@@ -66,9 +66,9 @@ void	setup_philosophers(t_data *data)
 	{
 		data->philos[i].id = i + 1;
 		data->philos[i].fork[LEFT] = &data->forks[i];
+		data->philos[i].fork[LEFT]->on_table = true;
 		data->philos[i].fork[RIGHT] = &data->forks[(i + 1) % data->n_philos];
-		data->philos[i].forks_held[LEFT] = false;
-		data->philos[i].forks_held[RIGHT] = false;
+		data->philos[i].fork[RIGHT]->on_table = true;
 		data->philos[i].sim_lock = &data->sim_lock;
 		data->philos[i].is_dead = false;
 		data->philos[i].sim_active = &data->sim_active;

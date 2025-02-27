@@ -21,7 +21,7 @@ void	*philo_routine(void *arg)
 	t_philo	*philo;
 
 	philo = (t_philo *)arg;
-	while (!sim_active(philo))
+	while (!party_still_going(philo))
 		usleep(TICK);
 	wait_till_start(philo->start_time);
 	if (philo->id % 2 != 0)
@@ -39,7 +39,7 @@ void	*philo_routine(void *arg)
 	return (NULL);
 }
 
-bool	sim_active(t_philo *philo)
+bool	party_still_going(t_philo *philo)
 {
 	bool	rval;
 
@@ -57,8 +57,8 @@ static int	philo_eat(t_philo *philo)
 		return (STOP_THE_PARTY);
 	if (take_second_fork(philo) == STOP_THE_PARTY)
 		return (STOP_THE_PARTY);
-	pthread_mutex_lock(philo->sim_lock);
 	gettimeofday(&time, NULL);
+	pthread_mutex_lock(philo->sim_lock);
 	philo->last_eaten = time;
 	philo->meals_eaten++;
 	pthread_mutex_unlock(philo->sim_lock);

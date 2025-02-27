@@ -47,7 +47,7 @@ static void	observe_the_party(t_data *data)
 	unsigned int	full_philos;
 
 	wait_till_start(&data->start_time);
-	while (sim_active(&data->philos[0]))
+	while (party_still_going(&data->philos[0]))
 	{
 		full_philos = 0;
 		i = 0;

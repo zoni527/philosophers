@@ -50,10 +50,14 @@
 
 typedef struct s_data	t_data;
 
+typedef struct s_fork {
+	pthread_mutex_t	lock;
+	bool			on_table;
+}	t_fork;
+
 typedef struct s_philo {
 	unsigned int	id;
-	pthread_mutex_t	*fork[2];
-	bool			forks_held[2];
+	t_fork			*fork[2];
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
 	bool			*sim_active;
@@ -70,7 +74,7 @@ typedef struct s_data {
 	bool			sim_active;
 	pthread_mutex_t	sim_lock;
 	t_philo			*philos;
-	pthread_mutex_t	*forks;
+	t_fork			*forks;
 	pthread_t		*threads;
 	unsigned int	n_philos;
 	unsigned int	t_to_die;
@@ -89,7 +93,7 @@ void			setup_philosophers(t_data *data);
 int				create_threads(t_data *data);
 /* philo_activities.c --------------------------------------------------------*/
 void			*philo_routine(void *arg);
-bool			sim_active(t_philo *philo);
+bool			party_still_going(t_philo *philo);
 /* philo_time_management.c ---------------------------------------------------*/
 long			time_diff_ms(const struct timeval *t1, \
 						const struct timeval *t2);
