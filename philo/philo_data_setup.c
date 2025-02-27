@@ -60,10 +60,8 @@ int	initialize_mutexes(t_data *data)
 void	setup_philosophers(t_data *data)
 {
 	unsigned int	i;
-	struct timeval	time;
 
 	i = 0;
-	gettimeofday(&time, NULL);
 	while (i < data->n_philos)
 	{
 		data->philos[i].id = i + 1;

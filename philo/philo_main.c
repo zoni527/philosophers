@@ -54,12 +54,14 @@ static void	observe_the_party(t_data *data)
 		while (i < data->n_philos)
 		{
 			if (should_be_dead(&data->philos[i]) \
-				&& data->philos[i].meals_eaten < data->n_philos)
+				&& (data->philos[i].meals_eaten < data->n_meals \
+				|| data->n_meals == 0))
 			{
 				die_and_stop_the_party(&data->philos[i]);
 				break ;
 			}
-			if (data->philos[i].meals_eaten >= data->n_meals)
+			if (data->philos[i].meals_eaten >= data->n_meals \
+				&& data->n_meals != 0)
 				full_philos++;
 			i++;
 		}
