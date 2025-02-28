@@ -27,7 +27,7 @@
 # define FAILURE		1
 
 # define PARTY_ON		0
-# define STOP_THE_PARTY	1
+# define LEAVE_PARTY	1
 
 # define TICK			100
 
@@ -39,9 +39,9 @@
 # define E_MUTEX		6
 # define E_THREAD		7
 
-# define M_NAN				"ERROR: only input positive numbers"
-# define M_OVERFLOW			"ERROR: don't try to overflow inputs"
-# define M_ZERO				"ERROR: use numbers larger than zero"
+# define M_NAN			"ERROR: only input positive numbers"
+# define M_OVERFLOW		"ERROR: don't try to overflow inputs"
+# define M_ZERO			"ERROR: use numbers larger than zero"
 
 # define M_TAKEN_FORK	"has taken a fork"
 # define M_EATING		"is eating"
@@ -61,9 +61,9 @@ typedef struct s_philo {
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
 	bool			*sim_active;
-	unsigned int	*t_to_die;
-	unsigned int	*t_to_eat;
-	unsigned int	*t_to_sleep;
+	unsigned int	*die_t;
+	unsigned int	*eat_t;
+	unsigned int	*sleep_t;
 	unsigned int	*n_meals;
 	unsigned int	meals_eaten;
 	struct timeval	last_eaten;
@@ -77,9 +77,9 @@ typedef struct s_data {
 	t_fork			*forks;
 	pthread_t		*threads;
 	unsigned int	n_philos;
-	unsigned int	t_to_die;
-	unsigned int	t_to_eat;
-	unsigned int	t_to_sleep;
+	unsigned int	die_t;
+	unsigned int	eat_t;
+	unsigned int	sleep_t;
 	unsigned int	n_meals;
 	struct timeval	start_time;
 }	t_data;

@@ -22,9 +22,9 @@ int	setup_data(t_data *data, int argc, char *argv[])
 	data->threads = malloc(data->n_philos * sizeof(pthread_t));
 	if (!data->philos || !data->forks || !data->threads)
 		return (FAILURE);
-	data->t_to_die = atou(argv[2]);
-	data->t_to_eat = atou(argv[3]);
-	data->t_to_sleep = atou(argv[4]);
+	data->die_t = atou(argv[2]);
+	data->eat_t = atou(argv[3]);
+	data->sleep_t = atou(argv[4]);
 	if (argc > 5)
 		data->n_meals = atou(argv[5]);
 	else
@@ -72,9 +72,9 @@ void	setup_philosophers(t_data *data)
 		data->philos[i].sim_lock = &data->sim_lock;
 		data->philos[i].is_dead = false;
 		data->philos[i].sim_active = &data->sim_active;
-		data->philos[i].t_to_die = &data->t_to_die;
-		data->philos[i].t_to_eat = &data->t_to_eat;
-		data->philos[i].t_to_sleep = &data->t_to_sleep;
+		data->philos[i].die_t = &data->die_t;
+		data->philos[i].eat_t = &data->eat_t;
+		data->philos[i].sleep_t = &data->sleep_t;
 		data->philos[i].last_eaten = data->start_time;
 		data->philos[i].start_time = &data->start_time;
 		data->philos[i].n_meals = &data->n_meals;

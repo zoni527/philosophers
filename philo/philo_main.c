@@ -13,6 +13,7 @@
 #include "philo.h"
 
 static void	observe_the_party(t_data *data);
+static bool	philo_has_eaten_enough(t_philo *philo);
 
 int	main(int argc, char *argv[])
 {
@@ -54,18 +55,29 @@ static void	observe_the_party(t_data *data)
 		while (i < data->n_philos)
 		{
 			if (should_be_dead(&data->philos[i]) \
-				&& (data->philos[i].meals_eaten < data->n_meals \
-				|| data->n_meals == 0))
+				&& !philo_has_eaten_enough(&data->philos[i]))
 			{
 				die_and_stop_the_party(&data->philos[i]);
 				break ;
 			}
-			if (data->philos[i].meals_eaten >= data->n_meals \
-				&& data->n_meals != 0)
+			if (philo_has_eaten_enough(&data->philos[i]))
 				full_philos++;
 			i++;
 		}
 		if (full_philos == data->n_philos)
 			break ;
 	}
+}
+
+static bool	philo_has_eaten_enough(t_philo *philo)
+{
+	bool	cant_eat_more;
+
+	pthread_mutex_lock(philo->sim_lock);
+	if (philo->meals_eaten >= *philo->n_meals && *philo->n_meals != 0)
+		cant_eat_more = true;
+	else
+		cant_eat_more = false;
+	pthread_mutex_unlock(philo->sim_lock);
+	return (cant_eat_more);
 }

@@ -44,7 +44,7 @@ static int	take_fork(t_philo *philo, unsigned int index)
 		if (should_be_dead(philo))
 			return (die_and_stop_the_party(philo));
 		if (party_still_going(philo) == false)
-			return (STOP_THE_PARTY);
+			return (LEAVE_PARTY);
 	}
 	return (PARTY_ON);
 }
@@ -68,7 +68,7 @@ bool	should_be_dead(t_philo *philo)
 	gettimeofday(&time, NULL);
 	pthread_mutex_lock(philo->sim_lock);
 	ms_from_last_eaten = time_diff_ms(&philo->last_eaten, &time);
-	if (ms_from_last_eaten > *philo->t_to_die)
+	if (ms_from_last_eaten > *philo->die_t)
 		dead_should_be = true;
 	else
 		dead_should_be = false;
