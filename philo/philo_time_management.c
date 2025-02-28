@@ -72,8 +72,9 @@ void	set_start_times(t_data *data)
 	unsigned int	i;
 
 	gettimeofday(&time, NULL);
-	data->start_time.tv_sec = time.tv_sec + 2;
-	data->start_time.tv_usec = 0;
+	data->start_time.tv_sec = time.tv_sec + \
+		(time.tv_usec + SYNC_TIME) / 1000000;
+	data->start_time.tv_usec = (time.tv_usec + SYNC_TIME) % 1000000;
 	i = 0;
 	while (i < data->n_philos)
 		data->philos[i++].last_eaten = data->start_time;

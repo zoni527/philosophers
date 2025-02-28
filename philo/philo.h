@@ -29,7 +29,9 @@
 # define PARTY_ON		0
 # define LEAVE_PARTY	1
 
+// Time unit is microseconds
 # define TICK			100
+# define SYNC_TIME		5000
 
 # define E_INPUT		1
 # define E_ALLOC		2
@@ -47,8 +49,6 @@
 # define M_EATING		"is eating"
 # define M_SLEEPING		"is sleeping"
 # define M_THINKING		"is thinking"
-
-typedef struct s_data	t_data;
 
 typedef struct s_fork {
 	pthread_mutex_t	lock;
