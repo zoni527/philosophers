@@ -46,6 +46,7 @@ static int	take_fork(t_philo *philo, unsigned int index)
 		if (party_still_going(philo) == false)
 			return (LEAVE_PARTY);
 	}
+	lock_and_report_activity(philo, M_TAKEN_FORK);
 	return (PARTY_ON);
 }
 
