@@ -94,7 +94,7 @@ int				setup_data(t_data *data, int argc, char *argv[]);
 int				initialize_mutexes(t_data *data);
 void			setup_philosophers(t_data *data);
 int				create_threads(t_data *data);
-int				there_has_been_an_error(t_philo *philo);
+bool			there_has_been_an_error(t_philo *philo);
 /* philo_activities.c --------------------------------------------------------*/
 void			*philo_routine(void *arg);
 bool			party_still_going(t_philo *philo);

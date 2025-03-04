@@ -6,7 +6,7 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/26 17:24:12 by jvarila           #+#    #+#             */
-/*   Updated: 2025/02/26 17:26:22 by jvarila          ###   ########.fr       */
+/*   Updated: 2025/03/04 15:42:56 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ int	create_threads(t_data *data)
 	return (SUCCESS);
 }
 
-int	there_has_been_an_error(t_philo *philo)
+bool	there_has_been_an_error(t_philo *philo)
 {
 	bool	rval;
 
