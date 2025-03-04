@@ -20,13 +20,11 @@ int	die_and_stop_the_party(t_philo *philo)
 	if (*philo->sim_active == false)
 	{
 		pthread_mutex_unlock(philo->sim_lock);
-		drop_forks(philo);
 		return (LEAVE_PARTY);
 	}
 	philo->is_dead = true;
 	printf("[%ld] %u died\n", ms_from_time(philo->start_time), philo->id);
 	*philo->sim_active = false;
-	drop_forks(philo);
 	pthread_mutex_unlock(philo->sim_lock);
 	return (LEAVE_PARTY);
 }

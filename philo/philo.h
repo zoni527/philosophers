@@ -30,7 +30,7 @@
 # define LEAVE_PARTY	1
 
 // Time unit is microseconds
-# define TICK			100
+# define TICK			300
 # define SYNC_TIME		5000
 
 # define E_INPUT		1
@@ -44,6 +44,7 @@
 # define M_NAN			"ERROR: only input positive numbers"
 # define M_OVERFLOW		"ERROR: don't try to overflow inputs"
 # define M_ZERO			"ERROR: use numbers larger than zero"
+# define M_THREAD		"ERROR: thread creation failed, aborting"
 
 # define M_TAKEN_FORK	"has taken a fork"
 # define M_EATING		"is eating"
@@ -61,6 +62,7 @@ typedef struct s_philo {
 	pthread_mutex_t	*sim_lock;
 	bool			is_dead;
 	bool			*sim_active;
+	bool			*error;
 	unsigned int	*die_t;
 	unsigned int	*eat_t;
 	unsigned int	*sleep_t;
@@ -72,6 +74,7 @@ typedef struct s_philo {
 
 typedef struct s_data {
 	bool			sim_active;
+	bool			error;
 	pthread_mutex_t	sim_lock;
 	t_philo			*philos;
 	t_fork			*forks;
@@ -91,6 +94,7 @@ int				setup_data(t_data *data, int argc, char *argv[]);
 int				initialize_mutexes(t_data *data);
 void			setup_philosophers(t_data *data);
 int				create_threads(t_data *data);
+int				there_has_been_an_error(t_philo *philo);
 /* philo_activities.c --------------------------------------------------------*/
 void			*philo_routine(void *arg);
 bool			party_still_going(t_philo *philo);
@@ -117,7 +121,6 @@ int				cleanup_and_return(t_data *data, int rval);
 /* philo_utils.c -------------------------------------------------------------*/
 int				take_first_fork(t_philo *philo);
 int				take_second_fork(t_philo *philo);
-int				starve(t_philo *philo);
 void			drop_forks(t_philo *philo);
 bool			should_be_dead(t_philo *philo);
 /*----------------------------------------------------------------------------*/

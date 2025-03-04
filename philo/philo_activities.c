@@ -23,6 +23,8 @@ void	*philo_routine(void *arg)
 	philo = (t_philo *)arg;
 	while (!party_still_going(philo))
 		usleep(TICK);
+	if (there_has_been_an_error(philo))
+		return (NULL);
 	wait_till_start(philo->start_time);
 	if (philo->id % 2 != 0)
 		philo_think(philo);
@@ -65,15 +67,9 @@ static int	philo_eat(t_philo *philo)
 	if (lock_and_report_activity(philo, M_EATING) == LEAVE_PARTY)
 		return (LEAVE_PARTY);
 	if (wait_and_try_not_to_die(philo, *philo->eat_t) == LEAVE_PARTY)
-	{
-		drop_forks(philo);
 		return (LEAVE_PARTY);
-	}
 	if (*philo->n_meals != 0 && philo->meals_eaten >= *philo->n_meals)
-	{
-		drop_forks(philo);
 		return (LEAVE_PARTY);
-	}
 	drop_forks(philo);
 	return (PARTY_ON);
 }

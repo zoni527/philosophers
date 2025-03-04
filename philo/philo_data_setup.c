@@ -30,9 +30,6 @@ int	setup_data(t_data *data, int argc, char *argv[])
 	else
 		data->n_meals = 0;
 	gettimeofday(&time, NULL);
-	data->start_time.tv_sec = 0;
-	data->start_time.tv_usec = 0;
-	data->sim_active = false;
 	return (SUCCESS);
 }
 
@@ -71,6 +68,7 @@ void	setup_philosophers(t_data *data)
 		data->philos[i].fork[RIGHT]->on_table = true;
 		data->philos[i].sim_lock = &data->sim_lock;
 		data->philos[i].is_dead = false;
+		data->philos[i].error = &data->error;
 		data->philos[i].sim_active = &data->sim_active;
 		data->philos[i].die_t = &data->die_t;
 		data->philos[i].eat_t = &data->eat_t;
@@ -94,9 +92,12 @@ int	create_threads(t_data *data)
 		if (pthread_create(&data->threads[i], NULL, \
 					&philo_routine, &data->philos[i]))
 		{
+			data->error = true;
+			data->sim_active = true;
+			pthread_mutex_unlock(&data->sim_lock);
 			while (i--)
 				pthread_join(data->threads[i], NULL);
-			pthread_mutex_unlock(&data->sim_lock);
+			printf("%s\n", M_THREAD);
 			return (FAILURE);
 		}
 		i++;
@@ -105,4 +106,14 @@ int	create_threads(t_data *data)
 	data->sim_active = true;
 	pthread_mutex_unlock(&data->sim_lock);
 	return (SUCCESS);
+}
+
+int	there_has_been_an_error(t_philo *philo)
+{
+	bool	rval;
+
+	pthread_mutex_lock(philo->sim_lock);
+	rval = *philo->error;
+	pthread_mutex_unlock(philo->sim_lock);
+	return (rval);
 }
