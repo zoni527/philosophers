@@ -1,8 +1,8 @@
 # philosophers
 
-![School of Athens](https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/La_scuola_di_Atene.jpg/1024px-La_scuola_di_Atene.jpg)
-
 A project about threads for Hive Helsinki coding school
+
+![School of Athens](https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/La_scuola_di_Atene.jpg/1024px-La_scuola_di_Atene.jpg)
 
 The philosophers project aims to teach a student how to create, manage and use threads in C programs.
 The philosophers sit around a round table, each having their own personal fork. A philosopher must try
