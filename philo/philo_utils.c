@@ -69,7 +69,7 @@ bool	should_be_dead(t_philo *philo)
 	gettimeofday(&time, NULL);
 	pthread_mutex_lock(philo->sim_lock);
 	ms_from_last_eaten = time_diff_ms(&philo->last_eaten, &time);
-	if (ms_from_last_eaten > *philo->die_t)
+	if (ms_from_last_eaten >= *philo->die_t)
 		dead_should_be = true;
 	else
 		dead_should_be = false;
