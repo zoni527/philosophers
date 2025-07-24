@@ -90,7 +90,7 @@ int	create_threads(t_data *data)
 	while (i < data->n_philos)
 	{
 		if (pthread_create(&data->threads[i], NULL, \
-					&philo_routine, &data->philos[i]))
+					&philo_routine, &data->philos[i]) != 0)
 		{
 			data->error = true;
 			data->sim_active = true;

@@ -1,0 +1,130 @@
+[
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_main.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_main.o"
+  ],
+  "file": "philo_main.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_data_setup.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_data_setup.o"
+  ],
+  "file": "philo_data_setup.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_activities.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_activities.o"
+  ],
+  "file": "philo_activities.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_time_management.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_time_management.o"
+  ],
+  "file": "philo_time_management.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_input.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_input.o"
+  ],
+  "file": "philo_input.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_output.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_output.o"
+  ],
+  "file": "philo_output.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_cleanup.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_cleanup.o"
+  ],
+  "file": "philo_cleanup.c"
+ },
+ {
+  "directory": "/home/jvarila/Repos/philosophers/philo",
+  "arguments": [
+   "cc",
+   "-Wall",
+   "-Wextra",
+   "-Werror",
+   "-c",
+   "philo_utils.c",
+   "-I",
+   "./",
+   "-o",
+   "obj/philo_utils.o"
+  ],
+  "file": "philo_utils.c"
+ }
+]
