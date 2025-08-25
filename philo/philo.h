@@ -30,7 +30,7 @@
 # define LEAVE_PARTY	1
 
 // Time unit is microseconds
-# define TICK			300
+# define TICK			500
 # define SYNC_TIME		5000
 
 # define E_INPUT		1
